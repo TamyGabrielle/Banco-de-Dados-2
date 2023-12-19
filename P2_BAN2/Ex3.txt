@@ -1,0 +1,82 @@
+3. (2 pontos) A figura abaixo mostra o log de execução de dois escalonamentos das transações T1, T2, T3, T4 e T5 até o ponto de queda do sistema. Descreva o processo para recuperação do banco utilizando os protocolos definido para cada log. Especifique quais operações serão refeitas ou desfeitas, e qual será o resultado final das variáveis A, B, C e D.
+
+
+1. Usar UNDO-REDO
+[start_transaction, T1]
+[write, T1, A, 5, 30]
+[write, T1, C, 2, 28]
+[start_transaction, T2]
+[write, T1, D, 20, 45]
+[commit, T1]
+[write, T2, B, 12, 38]
+[write, T2, A, 30, 42]
+[start_transaction, T3]
+[checkpoint, T2, T3]
+[write, T3, D, 45, 38]
+[commit, T2]
+[write, T3, C, 28, 64]
+[start_transaction, T4]
+[write, T4, A, 42, 50]
+[write, T3, D, 38, 53]
+[write, T4, B, 38, 78]
+[commit, T3]
+[write, T4, A, 50, 85]
+[commit, T4]
+[start_transaction, T5] <- queda do sistema
+
+
+a) Usar UNDO-REDO:
+
+    UNDO Fase:
+        Desfazer as alterações de T5 (transação que não foi confirmada).
+        Desfazer as alterações de T4.
+        Desfazer as alterações de T3 até o checkpoint.
+        Desfazer as alterações de T2.
+        Desfazer as alterações de T1.
+
+    REDO Fase:
+        Refazer as alterações de T1.
+        Refazer as alterações de T2.
+        Refazer as alterações de T3. 
+        Refazer as alterações de T4.
+
+    Resultado Final das Variáveis:
+        A: 85 (valor final de T4)
+        B: 38 (valor final de T2)
+        C: 64 (valor final de T3)
+        D: 53 (valor final de T3)
+
+
+
+Usar NO UNDO-REDO
+[start_transaction, T1]
+[write, T1, D, 25]
+[write, T1, C, 60]
+[start_transaction, T2]
+[write, T2, B, 45]
+[checkpoint, T1, T2]
+[start_transaction, T3]
+[write, T3, B, 52]
+[commit, T1]
+[write, T2, A, 27]
+[commit, T2]
+[write, T3, C, 42]
+[commit, T3]
+[start_transaction, T4]
+[write, T4, A, 50]
+[start_transaction, T5]
+[write, T4, D, 75]
+[write, T5, C, 53]
+[commit, T4]
+[write, T5, B, 78] <- Queda do Sistema
+	
+b) Usar NO UNDO-REDO:
+
+Não há a necessidade de desfazer ou refazer as operações.
+
+    Resultado Final das Variáveis:
+        A: 50 (valor de T4)
+        B: 78 (valor de T5)
+        C: 42 (valor de T3)
+        D: 75 (valor de T4)
+
